@@ -1,0 +1,12 @@
+def CALC 0
+def SUM 1
+[
+  CALC => (a, b) {
+    $a + $b
+  }
+  SUM => 10
+  MAIN => (){
+    [SUM] = [CALC](1,2)
+    out([SUM])
+  }
+]

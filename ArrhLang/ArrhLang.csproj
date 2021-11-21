@@ -6,13 +6,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Update="first.arrh">
+      <None Update="Examples\hello.arrh">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Examples\first.arrh">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         <DependentUpon>hello.arrh</DependentUpon>
       </None>
-      <None Update="hello.arrh">
+      <None Update="Examples\second.arrh">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Examples\" />
+    </ItemGroup>
 </Project>

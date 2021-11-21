@@ -1,5 +1,5 @@
-def CALC = 0
-def SUM = 1
+def CALC 0
+def SUM 1
 [
   CALC => (a, b) {
     $a + $b
@@ -7,5 +7,6 @@ def SUM = 1
   SUM => 0
   MAIN => (){
     [SUM] = [CALC](1,2)
+    out([SUM])
   }
 ]
