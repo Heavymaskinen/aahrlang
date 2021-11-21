@@ -12,8 +12,14 @@ namespace ArrhLang
                 Console.WriteLine("Insufficient input");
                 return;
             }
-            
-            new ArrhInterpreter().RunFile(args[0]);
+
+            var trimArgs = new string[args.Length-1];
+            for (var i=1;i<args.Length;i++)
+            {
+                trimArgs[i - 1] = args[i];
+            }
+
+            new ArrhInterpreter().RunFile(args[0], trimArgs);
         }
     }
 }

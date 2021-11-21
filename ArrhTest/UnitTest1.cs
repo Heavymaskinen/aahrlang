@@ -161,17 +161,33 @@ namespace ArrhTest
         }
 
         [Test]
-        public void HandleStringSumExpression()
+        public void HandleStringConcatExpression()
         {
             var code = "[\n" +
                        "666 => () {\n" +
                        "'1' ^ '1'\n" +
                        "}\n" +
                        "]\n";
-
+            
             var parser = new Parser();
             var program = parser.ParseIt(code);
             Assert.AreEqual("11", program.GetFunction(666)(null));
+        }
+
+        [Test]
+        public void HandleIfStatement()
+        {
+            var code = "[\n" +
+                       "666 => () {\n" +
+                       "[here][0] = 1\n"+
+                       "if [here][0] < 2\n" +
+                       "4\n\n" +
+                       "}\n" +
+                       "]\n";
+
+            var parser = new Parser();
+            var program = parser.ParseIt(code);
+            Assert.AreEqual("4", program.GetFunction(666)(null));
         }
 
         [Test]

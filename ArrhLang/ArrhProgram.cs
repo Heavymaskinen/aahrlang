@@ -152,5 +152,62 @@ namespace ArrhLang
                 return data[index]();
             };
         }
+
+        internal Func<string> BoolFunc(Func<string> left, Func<string> right, string sign)
+        {
+            return () =>
+            {
+                var leftVal = left();
+                var rightVal = right();
+
+                if (sign == "==")
+                {
+                    return (leftVal == rightVal).ToString();
+                }
+
+                var leftNum = int.Parse(leftVal);
+                var rightNum = int.Parse(rightVal);
+
+                if (sign == "<")
+                {
+                    return (leftNum < rightNum).ToString();
+                }
+
+                if (sign == ">")
+                {
+                    return (leftNum > rightNum).ToString();
+                }
+
+                if (sign == "<=")
+                {
+                    return (leftNum <= rightNum).ToString();
+                }
+
+                if (sign == ">=")
+                {
+                    return (leftNum >= rightNum).ToString();
+                }
+
+                return "";
+            };
+        }
+
+        internal Func<string> IfFunc(Func<string> clause, List<Func<string>> inner)
+        {
+            return () =>
+            {
+                string result = "";
+                var boolClause = bool.Parse(clause());
+                if (boolClause)
+                {
+                    foreach (var stmt in inner)
+                    {
+                        result = stmt();
+                    }
+                }
+
+                return result;
+            };
+        }
     }
 }

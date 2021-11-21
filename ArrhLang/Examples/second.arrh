@@ -5,8 +5,13 @@ def SUM 1
     $a + $b
   }
   SUM => 10
-  MAIN => (){
-    [SUM] = [CALC](1,2)
+  MAIN => (a,b){
+    [SUM] = [CALC]($a,$b)
     out([SUM])
+    out('¨')
+    if [SUM] > 2
+      out('Awesome sauce!¨')
+
+    out('The end')
   }
 ]

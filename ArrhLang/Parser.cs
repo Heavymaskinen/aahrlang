@@ -12,6 +12,7 @@ namespace ArrhLang
         {
             entries.Clear();
             constants = new() { { "MAIN", "666" } };
+            code = code.Replace("\n\n", "\n§\n");
             var lines = code.Split("\n", StringSplitOptions.TrimEntries);
 
 
@@ -105,9 +106,41 @@ namespace ArrhLang
             }
 
             var expressions = new List<Expression>();
-            foreach (var line in statementLines)
+            IfExpression ifExpression = null;
+            foreach (var l in statementLines)
             {
-                expressions.Add(ParseToExpression(line));
+                var line = l.Replace("¨", "\n");
+                if (line.StartsWith("if"))
+                {
+                    ifExpression = new IfExpression();
+                    var clauseStr = line.Substring(2).Trim();
+                    var clauseExpression = ParseToExpression(clauseStr);
+                    ifExpression.Clause = clauseExpression;
+                }
+                else
+                {
+                    if (line.Trim() == "§" && ifExpression != null)
+                    {
+                        expressions.Add(ifExpression);
+                        ifExpression = null;
+                        continue;
+                    }
+
+                    Expression item = ParseToExpression(line);
+                    if (ifExpression != null)
+                    {
+                        ifExpression.Expressions.Add(item);
+                    }
+                    else
+                    {
+                        expressions.Add(item);
+                    }
+
+
+                }
+
+
+
             }
 
             var entryType = new FunctionType
@@ -148,6 +181,31 @@ namespace ArrhLang
                 return new SumExpression { Left = left, Right = right };
             }
 
+            if (line.Contains("<="))
+            {
+                return CreateBooleanExpression(line, "<=");
+            }
+
+            if (line.Contains(">="))
+            {
+                return CreateBooleanExpression(line, ">=");
+            }
+
+            if (line.Contains("<"))
+            {
+                return CreateBooleanExpression(line, "<");
+            }
+
+            if (line.Contains(">"))
+            {
+                return CreateBooleanExpression(line, ">");
+            }
+
+            if (line.Contains("=="))
+            {
+                return CreateBooleanExpression(line, "==");
+            }
+
             if (line.Contains("^"))
             {
                 var parts = line.Split("^", StringSplitOptions.TrimEntries);
@@ -159,7 +217,7 @@ namespace ArrhLang
             if (IsAssignment(line))
             {
                 var parts = line.Split("=");
-                
+
                 var assignmentParts = line.Split(" = ");
                 var rightSide = ParseToExpression(assignmentParts[1].Trim(' '));
                 var left = parts[0];
@@ -212,8 +270,6 @@ namespace ArrhLang
                 };
             }
 
-            
-
             if (IsUsingEntry(line))
             {
                 var i = GetIndexFromSquares(line);
@@ -234,7 +290,20 @@ namespace ArrhLang
                 return stmt;
             }
 
-            throw new Exception("Insufficient indexing, "+line);
+            if (line == "§")
+            {
+                throw new Exception("Whitespace overflow");
+            }
+
+            throw new Exception("Insufficient indexing " + line);
+        }
+
+        private Expression CreateBooleanExpression(string line, string sign)
+        {
+            var parts = line.Split(sign);
+            var left = ParseToExpression(parts[0]);
+            var right = ParseToExpression(parts[1]);
+            return new BoolExpression { Left = left, Right = right, Sign = sign };
         }
 
         private static bool IsParameter(string line)
@@ -388,6 +457,23 @@ namespace ArrhLang
 
                 func = program.AppendFunc(left, right);
             }
+            else if (stmt is BoolExpression boolExp)
+            {
+                var left = ParseExpressionToFunction(boolExp.Left, program);
+                var right = ParseExpressionToFunction(boolExp.Right, program);
+                func = program.BoolFunc(left, right, boolExp.Sign);
+            }
+            else if (stmt is IfExpression ifExp)
+            {
+                var clause = ParseExpressionToFunction(ifExp.Clause, program);
+                var inner = new List<Func<string>>();
+                foreach (var exp in ifExp.Expressions)
+                {
+                    inner.Add(ParseExpressionToFunction(exp, program));
+                }
+
+                func = program.IfFunc(clause, inner);
+            }
 
             return func;
         }
@@ -402,6 +488,5 @@ namespace ArrhLang
 
             return parFuncs;
         }
-
     }
 }

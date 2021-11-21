@@ -22,6 +22,19 @@ namespace ArrhLang
     {
     }
 
+    class IfExpression : Expression
+    {
+        public Expression Clause;
+        public List<Expression> Expressions = new List<Expression>();
+    }
+
+    class BoolExpression : Expression
+    {
+        public Expression Left;
+        public Expression Right;
+        public string Sign;
+    }
+
     class FunctionExpression : Expression
     {
         public List<Expression> Parameters;

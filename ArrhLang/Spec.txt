@@ -8,6 +8,7 @@ Overflowing indices default to 0.
 Statements are terminated with newlines (no ; )
 Single \t indicates a comment
 Comment blocks are toggled with \t\t
+Newlines in strings are made with '¨'
 When defining a function, { must be inline with argument list. Parameter names can only be one character long.
 Inside the function, parameters must be prefixed with $ when accessed.
 
