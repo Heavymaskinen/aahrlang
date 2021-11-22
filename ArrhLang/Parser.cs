@@ -202,7 +202,7 @@ namespace ArrhLang
 
         private static bool IsStatement(string linePart)
         {
-            return linePart != "}" && linePart != "";
+            return linePart != "}";
         }
 
         private List<Expression> ParseParametersAsExpressions(string line)
@@ -220,6 +220,11 @@ namespace ArrhLang
 
         private Expression ParseToExpression(string line)
         {
+            if (string.IsNullOrEmpty(line))
+            {
+                throw new Exception("White space overflow");
+            }
+            
             if (IsAssignment(line))
             {
                 var assignmentParts = line.Split(" = ", StringSplitOptions.TrimEntries);
