@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ArrhLang
 {
     public class Parser
     {
+        public static string BlockCommentToken = "||";
+        public static string CommentToken = ">>";
         private List<EntryType> entries = new();
         private Dictionary<string, string> constants = new() { { "MAIN", "666" } };
 
@@ -12,9 +15,9 @@ namespace ArrhLang
         {
             entries.Clear();
             constants = new() { { "MAIN", "666" } };
-            code = code.Replace("\n\n", "\n§\n");
+            var newline = Environment.NewLine;
+            code = code.Replace(newline+newline, newline+"§"+newline);
             var lines = code.Split("\n", StringSplitOptions.TrimEntries);
-
 
             ParseEntriesFromCode(lines);
 
@@ -30,24 +33,37 @@ namespace ArrhLang
         private void ParseEntriesFromCode(string[] lines)
         {
             bool isPreamble = true;
+            bool isBlockCommment = false;
             for (var lineNo = 0; lineNo < lines.Length; lineNo++)
             {
+                var currentLine = lines[lineNo].Trim();
+                
+                if (currentLine.StartsWith(BlockCommentToken))
+                {
+                    isBlockCommment = !isBlockCommment;
+                    continue;
+                }
+                if (isBlockCommment)
+                {
+                    continue;
+                };
+
                 if (isPreamble)
                 {
-                    if (lines[lineNo].StartsWith("["))
+                    if (currentLine.StartsWith("["))
                     {
                         isPreamble = false;
                     }
                     else
                     {
-                        var parts = lines[lineNo].Split(" ");
+                        var parts = currentLine.Split(" ");
                         constants.Add(parts[1], parts[2]);
                     }
 
                     continue;
                 }
 
-                if (lines[lineNo].Contains("=>"))
+                if (currentLine.Contains("=>"))
                 {
                     lineNo = ParseEntry(lines, lineNo);
                 }
@@ -62,7 +78,6 @@ namespace ArrhLang
             {
                 indexStr = constants[indexStr];
             }
-
 
             var index = int.Parse(indexStr);
             var rightPart = entryParts[1].Trim();
@@ -87,7 +102,7 @@ namespace ArrhLang
 
         private static EntryType ParseValueEntry(string leftPart, int index)
         {
-            var value = leftPart.Replace("'", "").Trim(' ');
+            var value = leftPart.Replace("'", "").Replace("¨", "\n").Trim(' ');
             return new ValueType { Index = index, Value = value };
         }
 
@@ -97,50 +112,82 @@ namespace ArrhLang
             var argParts = argList.Split(",");
 
             var statementLines = new List<string>();
-            var linePart = lines[lineNo].Trim();
-            while (IsStatement(linePart))
+            var currentLine = lines[lineNo].Trim();
+
+            var isBlockComment = false;
+            while (IsStatement(currentLine))
             {
-                statementLines.Add(linePart);
+                if (currentLine.StartsWith(BlockCommentToken))
+                {
+                    isBlockComment = !isBlockComment;
+                }
+                else if (currentLine.StartsWith(CommentToken) || isBlockComment)
+                {
+                }
+                else
+                {
+                    statementLines.Add(currentLine);
+                }
                 lineNo++;
-                linePart = lines[lineNo].Trim();
+                currentLine = lines[lineNo].Trim();
             }
 
             var expressions = new List<Expression>();
             IfExpression ifExpression = null;
+            ForExpression forExpression = null;
+
+            var collectionStack = new Stack<List<Expression>>();
+            collectionStack.Push(expressions);
+            
             foreach (var l in statementLines)
             {
-                var line = l.Replace("¨", "\n");
-                if (line.StartsWith("if"))
+                var line = l.Replace("¨", "\n").Trim();
+                
+                if (line.StartsWith("for"))
+                {
+                    var parts = line.Split("(");
+                    var inner = parts[1].Split(")")[0];
+                    var segments = inner.Split(";");
+                    var clause = ParseToExpression(segments[0]);
+                    var increment = ParseToExpression(segments[1]);
+                    forExpression = new ForExpression { Clause = clause, Increment = increment };
+                    collectionStack.Push(forExpression.Expressions);
+
+                } 
+                else if (line.StartsWith("if"))
                 {
                     ifExpression = new IfExpression();
                     var clauseStr = line.Substring(2).Trim();
                     var clauseExpression = ParseToExpression(clauseStr);
                     ifExpression.Clause = clauseExpression;
+                    collectionStack.Push(ifExpression.Expressions);
                 }
                 else
                 {
-                    if (line.Trim() == "§" && ifExpression != null)
+                    if (line == "§" && forExpression != null)
                     {
-                        expressions.Add(ifExpression);
+                        collectionStack.Pop();
+                        collectionStack.Peek().Add(forExpression);
+                        forExpression = null;
+                        continue;
+                    }
+                    
+                    if (line== "§" && ifExpression != null)
+                    {
+                        collectionStack.Pop();
+                        collectionStack.Peek().Add(ifExpression);
                         ifExpression = null;
                         continue;
                     }
 
-                    Expression item = ParseToExpression(line);
-                    if (ifExpression != null)
-                    {
-                        ifExpression.Expressions.Add(item);
-                    }
-                    else
-                    {
-                        expressions.Add(item);
-                    }
-
-
+                    var item = ParseToExpression(line);
+                    collectionStack.Peek().Add(item);
                 }
+            }
 
-
-
+            if (ifExpression != null || forExpression != null)
+            {
+                throw new Exception("Infinite If or For-statement detected");
             }
 
             var entryType = new FunctionType
@@ -173,6 +220,28 @@ namespace ArrhLang
 
         private Expression ParseToExpression(string line)
         {
+            if (IsAssignment(line))
+            {
+                var assignmentParts = line.Split(" = ", StringSplitOptions.TrimEntries);
+                var rightSide = ParseToExpression(assignmentParts[1].Trim(' '));
+                var left = assignmentParts[0];
+
+                if (left.StartsWith("$"))
+                {
+                    throw new Exception("Parameters are read-only");
+                }
+                
+                if (FirstElementIsLocal(left))
+                {
+                    var splitted = left.Split("[here]");
+                    var localIndex = GetIndexFromSquares(splitted[1].Trim(' '));
+                    return new LocalValueAssign { Index = localIndex, Value = rightSide };
+                }
+
+                var index = GetIndexFromSquares(assignmentParts[0].Trim(' '));
+                return new ValueAssign { Index = index, Value = rightSide };
+            }
+            
             if (line.Contains("+"))
             {
                 var parts = line.Split("+", StringSplitOptions.TrimEntries);
@@ -212,23 +281,6 @@ namespace ArrhLang
                 var left = ParseToExpression(parts[0]);
                 var right = ParseToExpression(parts[1]);
                 return new AppendExpression { Left = left, Right = right };
-            }
-
-            if (IsAssignment(line))
-            {
-                var parts = line.Split("=");
-
-                var assignmentParts = line.Split(" = ");
-                var rightSide = ParseToExpression(assignmentParts[1].Trim(' '));
-                var left = parts[0];
-                if (FirstElementIsLocal(left))
-                {
-                    var splitted = left.Split("[here]");
-                    var localIndex = GetIndexFromSquares(splitted[1].Trim(' '));
-                    return new LocalValueAssign { Index = localIndex, Value = rightSide };
-                }
-                var index = GetIndexFromSquares(parts[0].Trim(' '));
-                return new ValueAssign { Index = index, Value = rightSide };
             }
 
             if (FirstElementIsLocal(line))
@@ -276,6 +328,11 @@ namespace ArrhLang
                 var stmt = new ValueRead { Index = i };
                 return stmt;
             }
+            
+            if (line == "§")
+            {
+                throw new Exception("Whitespace overflow");
+            }
 
             if (IsStringLiteral(line))
             {
@@ -290,17 +347,12 @@ namespace ArrhLang
                 return stmt;
             }
 
-            if (line == "§")
-            {
-                throw new Exception("Whitespace overflow");
-            }
-
             throw new Exception("Insufficient indexing " + line);
         }
 
         private Expression CreateBooleanExpression(string line, string sign)
         {
-            var parts = line.Split(sign);
+            var parts = line.Split(sign, StringSplitOptions.TrimEntries);
             var left = ParseToExpression(parts[0]);
             var right = ParseToExpression(parts[1]);
             return new BoolExpression { Left = left, Right = right, Sign = sign };
@@ -329,7 +381,8 @@ namespace ArrhLang
 
         private static bool IsFunctionCall(string line)
         {
-            return line.Contains("(");
+            var isFunctionCall = line.Contains("(");
+            return isFunctionCall;
         }
 
         private static bool IsAssignment(string line)
@@ -344,14 +397,21 @@ namespace ArrhLang
 
         private static string[] GetParamParts(string line)
         {
-            var first = line.Split("(");
-            var second = first[1].Split(")");
-            if (second[0].Length <= 1)
+            var firstIndex = line.IndexOf('(');
+            var first = line.Substring(firstIndex+1);
+            var lastindex = first.LastIndexOf(')');
+            if (lastindex <= 0)
+            {
+                lastindex = first.Length > 1? first.Length-1: first.Length;
+            }
+            
+            var second = first.Substring(0, lastindex);
+            if (second.Length <= 1)
             {
                 return Array.Empty<string>();
             }
 
-            var paramLine = second[0];
+            var paramLine = second;
             var paramParts = paramLine.Split(",");
             return paramParts;
         }
@@ -473,6 +533,18 @@ namespace ArrhLang
                 }
 
                 func = program.IfFunc(clause, inner);
+            }
+            else if (stmt is ForExpression forExp)
+            {
+                var clause = ParseExpressionToFunction(forExp.Clause, program);
+                var increment = ParseExpressionToFunction(forExp.Increment, program);
+                var inner = new List<Func<string>>();
+                foreach (var exp in forExp.Expressions)
+                {
+                    inner.Add(ParseExpressionToFunction(exp, program));
+                }
+
+                func = program.ForFunc(clause, increment, inner);
             }
 
             return func;

@@ -27,6 +27,13 @@ namespace ArrhLang
         public Expression Clause;
         public List<Expression> Expressions = new List<Expression>();
     }
+    
+    class ForExpression : Expression
+    {
+        public Expression Clause;
+        public Expression Increment;
+        public List<Expression> Expressions = new List<Expression>();
+    }
 
     class BoolExpression : Expression
     {
@@ -59,12 +66,6 @@ namespace ArrhLang
     class AppendExpression : Expression
     {
         public Expression Left;
-        public Expression Right;
-    }
-
-    class AssignExpression : Expression
-    {
-        public AssignableExpression Left;
         public Expression Right;
     }
 

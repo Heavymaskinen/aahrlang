@@ -6,13 +6,13 @@ The result of the last line in a function is the return value.
 Local variables are accessed using [here][x]. Local variables are not cleaned up automatically.
 Overflowing indices default to 0.
 Statements are terminated with newlines (no ; )
-Single \t indicates a comment
-Comment blocks are toggled with \t\t
+>> indicates a comment
+Comment blocks are toggled with ||
 Newlines in strings are made with '¨'
 When defining a function, { must be inline with argument list. Parameter names can only be one character long.
 Inside the function, parameters must be prefixed with $ when accessed.
 
-if statements do not use () or {}. Sections are terminated by double linebreak \n\n
+if-statements do not use () or {}. Sections are terminated by double linebreak \n\n
 if [here][4] < $a
   [0]($a)
   [1]('checked')
@@ -23,5 +23,6 @@ else
 }
 
 for loops use an externally defined variable and the count will always increment by 1.
-for ([here][4] < 10) {
+for (<bool clause; <increment expression>)
+for ([here][4] < 10; here[4] = here[4] + 1) {
 }

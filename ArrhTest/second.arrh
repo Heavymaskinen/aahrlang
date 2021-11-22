@@ -4,9 +4,19 @@ def SUM 1
   CALC => (a, b) {
     $a + $b
   }
-  SUM => 0
-  MAIN => (){
-    [SUM] = [CALC](1,2)
+  SUM => 10
+  MAIN => (a,b){
+    [SUM] = [CALC]($a,$b)
     out([SUM])
+    >> This is a comment!
+    out('¨')
+    if [SUM] > 2
+      out('Awesome sauce!!¨')
+
+    [here][2] = $a
+    for ([here][2] < 10; [here][2] = [here][2] + $b)
+      out('Awesome sauces!!¨')
+
+    out('The end')
   }
 ]

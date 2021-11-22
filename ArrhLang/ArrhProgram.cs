@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ArrhLang
 {
+
     public class ArrhProgram
     {
         private Dictionary<int, Func<string>> data = new();
@@ -11,7 +13,6 @@ namespace ArrhLang
         private Dictionary<string, string> scoped = new();
         private Dictionary<int, Func<string[], string>> functions = new();
         
-
         private Dictionary<string, Func<string[], string>> builtIn = new()
         {
             {
@@ -76,9 +77,29 @@ namespace ArrhLang
             };
         }
 
+        public Func<string> ForFunc(Func<string> clause, Func<string> increment, List<Func<string>> lines)
+        {
+            return () =>
+            {
+                var val = "";
+
+                while ( clause() == bool.TrueString)
+                {
+                    foreach (var line in lines)
+                    {
+                        val = line();
+                    }
+
+                    increment();
+                }
+
+                return val;
+            };
+        }
+
         public Func<string[], string> FullFunc(List<Func<string>> lines, string[] parameters)
         {
-            return (values) =>
+            return values =>
             {
                 scoped = new();
                 scopedStack.Push(scoped);
@@ -120,7 +141,8 @@ namespace ArrhLang
                 var leftVal = left();
                 var rightVal = right();
 
-                return (int.Parse(leftVal) + int.Parse(rightVal)) + "";
+                var sumResult = int.Parse(leftVal) + int.Parse(rightVal);
+                return sumResult + "";
             };
         }
 
@@ -139,7 +161,7 @@ namespace ArrhLang
         {
             return () =>
             {
-                locals[localAssIndex] = localAssValue;
+                locals[localAssIndex] = ValueFunc(localAssValue());
                 return locals[localAssIndex]();
             };
         }
@@ -148,7 +170,8 @@ namespace ArrhLang
         {
             return () =>
             {
-                data[index] = val;
+                var newValue = val();
+                data[index] = ValueFunc(newValue);
                 return data[index]();
             };
         }
@@ -162,7 +185,8 @@ namespace ArrhLang
 
                 if (sign == "==")
                 {
-                    return (leftVal == rightVal).ToString();
+                    var s = (leftVal == rightVal).ToString();
+                    return s;
                 }
 
                 var leftNum = int.Parse(leftVal);
@@ -175,7 +199,8 @@ namespace ArrhLang
 
                 if (sign == ">")
                 {
-                    return (leftNum > rightNum).ToString();
+                    var boolVal = (leftNum > rightNum).ToString();
+                    return boolVal;
                 }
 
                 if (sign == "<=")
@@ -197,7 +222,8 @@ namespace ArrhLang
             return () =>
             {
                 string result = "";
-                var boolClause = bool.Parse(clause());
+                var cl = clause();
+                var boolClause = bool.Parse(cl);
                 if (boolClause)
                 {
                     foreach (var stmt in inner)

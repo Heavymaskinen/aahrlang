@@ -9,7 +9,7 @@ namespace ArrhLang
         {
             if (!File.Exists(filename))
             {
-                throw new Exception("Can't do it, mate! " + filename);
+                throw new Exception("Cannot interpret " + filename);
             }
 
             try
@@ -18,11 +18,10 @@ namespace ArrhLang
                 var parser = new Parser();
                 var program = parser.ParseIt(code);
                 program.GetFunction(666)(args);
-                Console.WriteLine("");
             }
             catch (Exception e)
             {
-                Console.WriteLine("Arrh intepretation terminated with fault: " + e.Message+"\n");
+                Console.WriteLine("Arrh intepretation terminated with fault: " + e.Message);
             }
         }
     }
