@@ -16,8 +16,8 @@ namespace ArrhLang
             {
                 var code = File.ReadAllText(filename);
                 var parser = new Parser();
-                var program = parser.ParseIt(code);
-                program.GetFunction(666)(args);
+                var program = parser.ScanAndParse(code);
+                program.GetFunction("666")(args);
             }
             catch (Exception e)
             {

@@ -1,38 +1,82 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ArrhLang
 {
-    class EntryType
+    public class EntryType
     {
-        public int Index;
+        public string Index;
+        
+        public override string ToString()
+        {
+            return "EntryType@"+Index;
+        } 
     }
 
     class ValueType : EntryType
     {
         public string Value;
+
+        public override string ToString()
+        {
+            return "ValueType[" + Value + "]@"+Index;
+        } 
+    }
+    
+    class ArrayType : EntryType
+    {
+        public string[] Value;
+
+        public override string ToString()
+        {
+            return "ArrayType[" + String.Join(',',Value) + "]@"+Index;
+        } 
     }
 
     class FunctionType : EntryType
     {
         public string[] Parameters;
         public List<Expression> Expressions;
+        
+        public override string ToString()
+        {
+            return $"FunctionType[{Index}]({String.Join(", ",Parameters)})";
+        } 
+    }
+    
+    class ObjectEntryType : EntryType
+    {
+        public List<EntryType> Entries;
+        
+        public override string ToString()
+        {
+            return $"(Object)";
+        } 
+    }
+
+    class Operator : Expression
+    {
+        public string Sign;
+        public Expression Left;
+        public Expression Right;
     }
 
     class Expression
     {
+        public string Line;
     }
 
     class IfExpression : Expression
     {
         public Expression Clause;
-        public List<Expression> Expressions = new List<Expression>();
+        public List<Expression> Expressions = new();
     }
-    
+
     class ForExpression : Expression
     {
         public Expression Clause;
         public Expression Increment;
-        public List<Expression> Expressions = new List<Expression>();
+        public List<Expression> Expressions = new();
     }
 
     class BoolExpression : Expression
@@ -42,6 +86,16 @@ namespace ArrhLang
         public string Sign;
     }
 
+    class ReferenceExpression : Expression
+    {
+        public string Index;
+
+        public ReferenceExpression(string index)
+        {
+            Index = index;
+        }
+    }
+
     class FunctionExpression : Expression
     {
         public List<Expression> Parameters;
@@ -49,7 +103,12 @@ namespace ArrhLang
 
     class FunctionCall : FunctionExpression
     {
-        public int FunctionIndex;
+        public string FunctionIndex;
+
+        public override string ToString()
+        {
+            return $"CallFunc [{FunctionIndex}]({string.Join(", ",Parameters)})";
+        }
     }
 
     class BuiltInFunctionCall : FunctionExpression
@@ -71,31 +130,66 @@ namespace ArrhLang
 
     class ValueRead : Expression
     {
-        public int Index;
+        public string Index;
+        public override string ToString()
+        {
+            return "Read[" + Index + "]";
+        }
     }
 
     class ParameterRead : Expression
     {
         public string Name;
+
+        public override string ToString()
+        {
+            return $"ReadParam[{Name}]";
+        }
     }
 
-    class AssignableExpression : Expression { }
+    class AssignableExpression : Expression
+    {
+    }
 
     class ValueAssign : AssignableExpression
     {
-        public int Index;
+        public string Index;
         public Expression Value;
     }
 
     class LocalValueRead : Expression
     {
-        public int Index;
+        public string Index;
+        public override string ToString()
+        {
+            return "ReadLocal[" + Index + "]";
+        }
     }
 
     class LocalValueAssign : AssignableExpression
     {
-        public int Index;
+        public string Index;
         public Expression Value;
+    }
+
+    class ArrayValueRead : Expression
+    {
+        public string Index;
+        public string VarIndex;
+        public override string ToString()
+        {
+            return $"ReadArray[{Index}][{VarIndex}]";
+        }
+    }
+    
+    class ArrayAppend : AssignableExpression
+    {
+        public string Index;
+        public Expression Value;
+        public override string ToString()
+        {
+            return $"AppendArray[{Index}][] = [{Value}]";
+        }
     }
 
     class Literal : Expression

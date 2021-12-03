@@ -19,8 +19,8 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
-            Assert.AreEqual("hej", program.GetData(0));
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("hej", program.GetData("0"));
         }
 
         [Test]
@@ -34,7 +34,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("hej", program.GetFunction(1)(null));
         }
 
@@ -51,7 +51,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("10", program.GetFunction(1)(null));
         }
 
@@ -69,7 +69,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("hej", program.GetFunction(666)(null));
         }
 
@@ -88,8 +88,16 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("hej", program.GetFunction(666)(null));
+        }
+
+        [Test]
+        public void UtilTest()
+        {
+            var str = "[GREET]('hello') ";
+            Assert.AreEqual("GREET",Utils.GetInner(str, '[', ']'));
+            Assert.AreEqual("'hello'",Utils.GetInner(str, '(', ')'));
         }
 
         [Test]
@@ -106,7 +114,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("hello", program.GetFunction(666)(null));
         }
 
@@ -115,7 +123,7 @@ namespace ArrhTest
         {
             var code = "def GREET 1\n" +
                        "[\n" +
-                       "GREET => (a) {\n" +
+                       "GREET => (b) {\n" +
                        "[2]('hi')\n" +
                        "}\n" +
                        "2 => (a) {\n" +
@@ -127,7 +135,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("hi", program.GetFunction(666)(null));
         }
 
@@ -141,8 +149,50 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
+        }
+        
+        [Test]
+        public void HandleMinusExpression()
+        {
+            var code = "[\n" +
+                       "666 => () {\n" +
+                       "3 - 2\n" +
+                       "}\n" +
+                       "]\n";
+
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("1", program.GetFunction(666)(null));
+        }
+        
+        [Test]
+        public void HandleModuloExpression()
+        {
+            var code = "[\n" +
+                       "666 => () {\n" +
+                       "2 % 2\n" +
+                       "}\n" +
+                       "]\n";
+
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("0", program.GetFunction(666)(null));
+        }
+        
+        [Test]
+        public void HandleDivisionExpression()
+        {
+            var code = "[\n" +
+                       "666 => () {\n" +
+                       "2 / 2\n" +
+                       "}\n" +
+                       "]\n";
+
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("1", program.GetFunction(666)(null));
         }
         
         [Test]
@@ -156,7 +206,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
         }
         
@@ -172,7 +222,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
         }
         
@@ -187,7 +237,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
         }
 
@@ -198,12 +248,12 @@ namespace ArrhTest
                        "1 => (a,b) {\n" +
                        "$a + $b\n" +
                        "}\n" +
-                       "MAIN => () {\n" +
+                       "666 => () {\n" +
                        "[1](1,1)\n" +
                        "}\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
         }
 
@@ -217,7 +267,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("11", program.GetFunction(666)(null));
         }
 
@@ -233,7 +283,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("4", program.GetFunction(666)(null));
         }
 
@@ -252,7 +302,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            Assert.Throws<Exception>(() => parser.ParseIt(code));
+            Assert.Throws<Exception>(() => parser.ScanAndParse(code));
         }
 
         [Test]
@@ -271,7 +321,7 @@ namespace ArrhTest
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("1", program.GetFunction(666)(null));
         }
 
@@ -279,14 +329,14 @@ namespace ArrhTest
         public void HandleSingleComment()
         {
             var code = "[\n" +
-                       "666 => () {\n" +
+                       "MAIN => () {\n" +
                        "42\n" +
                        Parser.CommentToken + "[here][0] = 1\n" +
                        "}\n" +
                        "]\n";
 
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("42", program.GetFunction(666)(null));
         }
 
@@ -297,14 +347,14 @@ namespace ArrhTest
                        "666 => () {\n" +
                        "[here][0] = 0\n" +
                        "[here][1] = 0\n" +
-                       "for ([here][0] < 10; [here][0] = [here][0]+1) { \n" +
+                       "for ([here][0] < 10; [here][0] = [here][0]+1)\n" +
                        "[here][1] = [here][0]" +
                        Environment.NewLine+Environment.NewLine+
                        "}\n" +
                        "]\n";
             
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("9", program.GetFunction(666)(null));
         }
         
@@ -315,7 +365,7 @@ namespace ArrhTest
                        "666 => () {\n" +
                        "[here][0] = 0\n" +
                        "[here][1] = 0\n" +
-                       "for ([here][0] < 10; [here][0] = [here][0]+1) { \n" +
+                       "for ([here][0] < 10; [here][0] = [here][0]+1)\n" +
                        "[here][1] = [here][0]" +
                        Environment.NewLine+Environment.NewLine+
                        "2\n"+
@@ -323,7 +373,7 @@ namespace ArrhTest
                        "]\n";
             
             var parser = new Parser();
-            var program = parser.ParseIt(code);
+            var program = parser.ScanAndParse(code);
             Assert.AreEqual("2", program.GetFunction(666)(null));
         }
 
@@ -332,6 +382,105 @@ namespace ArrhTest
         {
             var args = new[] { "2", "2" };
             new ArrhInterpreter().RunFile("second.arrh", args);
+        }
+
+        [Test]
+        public void ScanEntry()
+        {
+            var scanner = new Scanner();
+            var scanned = scanner.Parse("[\n"
+                          +"0 => 2\n"
+                          +"]\n");
+            Assert.AreEqual(1, scanned.entries.Count);
+            Assert.AreEqual("2", scanned.DataValue(0).Value);
+            Assert.AreEqual("0", scanned.entries[0].Index);
+        }
+
+        [Test]
+        public void ScanFunction()
+        {
+            var scanner = new Scanner();
+            scanner.Parse("[\n"
+                          + "[0] => () {\n"
+                          + "[1] = 2 +2\n"
+                          + "}\n"
+                          + "]\n");
+        }
+
+        [Test]
+        public void HandleEntryArrays()
+        {
+            var code = "[\n" +
+                       "0 => [1,2,3]"+
+                       "]\n";
+            
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual(new []{"1","2","3"}, program.GetArrayData(0));
+        }
+        
+        [Test]
+        public void AccessEntryArray()
+        {
+            var code = "[\n" +
+                       "0 => [1,2,3]\n"+
+                       "MAIN => {\n"+
+                       "[0][0]\n"+
+                       "}\n"+
+                       "]\n";
+            
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("1", program.GetFunction(666)(null));
+        }
+        
+        [Test]
+        public void AddToEntryArray()
+        {
+            var code = "[\n" +
+                       "0 => [1,2,3]\n"+
+                       "MAIN => {\n"+
+                       "[0][] = 4\n"+
+                       "[0][3]\n"+
+                       "}\n"+
+                       "]\n";
+            
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("4", program.GetFunction(666)(null));
+        }
+        
+        [Test]
+        public void GetArraySize()
+        {
+            var code = "[\n" +
+                       "0 => [1,2,3,5]\n"+
+                       "MAIN => {\n"+
+                       "[0][] = 3\n"+
+                       "size(&[0])\n"+
+                       "}\n"+
+                       "]\n";
+            
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("5", program.GetFunction(666)(null));
+        }
+
+        [Test]
+        public void HandleObject()
+        {
+            var code = "[\n" +
+                       "0 => [\n"+
+                       "0 => 'hej'\n"+
+                       "]\n"+
+                       "MAIN => {\n"+
+                       "[0][0]\n"+
+                       "}\n"+
+                       "]\n";
+            
+            var parser = new Parser();
+            var program = parser.ScanAndParse(code);
+            Assert.AreEqual("hej", program.GetFunction(666)(null));
         }
     }
 }
